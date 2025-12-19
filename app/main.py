@@ -1,12 +1,18 @@
 """FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app.agent import process_message
 from app.state import get_user_state, get_all_states
+
+# Get the path to static files
+STATIC_DIR = Path(__file__).parent.parent / "static"
 
 
 # Request/Response models
@@ -34,8 +40,9 @@ class HealthResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    print("E-commerce Support Agent is starting...")
-    print("POST /chat to start a conversation")
+    print("🛍️ E-commerce Support Agent is starting...")
+    print("📱 Chat UI available at http://localhost:8000")
+    print("🔧 API endpoint: POST /chat")
     yield
     print("Shutting down...")
 
@@ -48,8 +55,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Mount static files
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-@app.get("/", response_model=HealthResponse)
+
+@app.get("/")
+async def serve_chat_ui():
+    """Serve the chat UI."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
     return HealthResponse(
