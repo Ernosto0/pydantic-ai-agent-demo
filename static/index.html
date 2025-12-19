@@ -432,6 +432,37 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .reset-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .reset-btn:hover {
+            border-color: #ff4757;
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.08);
+        }
+
+        .reset-btn:active {
+            transform: translateY(1px);
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 0;
@@ -462,7 +493,10 @@
                 <h1>ShopEasy Support</h1>
                 <p><span class="status-dot"></span>AI Assistant Online</p>
             </div>
-            <div class="user-badge" id="user-badge">user_123</div>
+            <div class="header-actions">
+                <button class="reset-btn" id="reset-btn" title="Clear chat history and reset session">Reset</button>
+                <div class="user-badge" id="user-badge">user_123</div>
+            </div>
         </header>
         
         <div class="chat-messages" id="chat-messages">
@@ -506,11 +540,14 @@
     <div class="error-toast" id="error-toast"></div>
 
     <script>
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substring(2, 8);
+        }
+
         // Generate a random user ID or get from localStorage
-        const userId = localStorage.getItem('shopEasyUserId') || 
-            'user_' + Math.random().toString(36).substring(2, 8);
+        let userId = localStorage.getItem('shopEasyUserId') || generateUserId();
         localStorage.setItem('shopEasyUserId', userId);
-        
+
         document.getElementById('user-badge').textContent = userId;
 
         const chatMessages = document.getElementById('chat-messages');
@@ -519,6 +556,7 @@
         const typingIndicator = document.getElementById('typing-indicator');
         const welcomeMessage = document.getElementById('welcome');
         const errorToast = document.getElementById('error-toast');
+        const resetBtn = document.getElementById('reset-btn');
 
         // Load chat history from localStorage
         function loadChatHistory() {
@@ -678,6 +716,23 @@
             chatMessages.appendChild(welcomeMessage);
             welcomeMessage.style.display = 'block';
         }
+
+        function resetEverything() {
+            // Confirm because this is destructive
+            const ok = confirm('Reset chat?\n\nThis will clear your chat history and start a fresh session.');
+            if (!ok) return;
+
+            // Clear chat history for current user
+            localStorage.removeItem(`chat_${userId}`);
+
+            // Reset the user id so the backend state becomes fresh too
+            localStorage.removeItem('shopEasyUserId');
+
+            // Reload to re-initialize the UI cleanly
+            window.location.reload();
+        }
+
+        resetBtn.addEventListener('click', resetEverything);
 
         // Load history on page load
         loadChatHistory();
